@@ -1,0 +1,8 @@
+---
+- hosts: all
+  remote_user: root
+  roles:
+    - role: boss-ansible-role-rsyslogd
+      bossjones__user: root
+      bossjones__group: root
+
