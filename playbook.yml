@@ -10,3 +10,4 @@
       # main_nodes_ips: "{{ groups['servers'] | map('extract', hostvars, ['ansible_ssh_host']) | list }}"
       boss__rsyslogd__rsyslog_permitted_peers: "{{ groups['servers'] | map('extract', hostvars, ['ansible_ssh_host']) | list }}"
       boss__rsyslogd__rsyslog_allow: "{{ groups['servers'] | map('extract', hostvars, ['ansible_ssh_host']) | list }}"
+      rsyslog__default_driver_authmode: "anon"
