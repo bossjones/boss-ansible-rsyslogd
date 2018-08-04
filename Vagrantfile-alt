@@ -1,0 +1,90 @@
+servers=[
+      {
+        :hostname => "splunk",
+        :ip => "192.168.33.100",
+        :ram => 2048,
+        :cpu => 2
+      },
+      {
+        :hostname => "rsyslog-server1",
+        :ip => "192.168.33.101",
+        :ram => 512,
+        :cpu => 1
+      },
+      {
+        :hostname => "rsyslog-server2",
+        :ip => "192.168.33.102",
+        :ram => 512,
+        :cpu => 1
+      },
+      {
+        :hostname => "rsyslog-client1",
+        :ip => "192.168.33.103",
+        :ram => 512,
+        :cpu => 1
+      },
+      {
+        :hostname => "rsyslog-client2",
+        :ip => "192.168.33.104",
+        :ram => 512,
+        :cpu => 1
+      }
+]
+
+# SOURCE: https://github.com/bossjones/docker-swarm-vbox-lab/blob/master/Vagrantfile
+$bootstrap_script = <<SHELL
+if [ -f /opt/deployment/nmon-logger ]; then
+   echo "/opt/deployment/nmon-logger exists"
+   exit 0
+fi
+sudo mkdir /opt/deployment
+sudo git clone https://github.com/guilhemmarchand/nmon-logger.git /opt/deployment/nmon-logger
+sudo chown vagrant:vagrant -R /opt/deployment/nmon-logger
+SHELL
+
+Vagrant.configure(2) do |config|
+
+    # Get's honored normally
+    config.vm.synced_folder ".", "/vagrant", disabled: true
+    # But not the centos box
+    config.vm.synced_folder '.', '/home/vagrant/sync', disabled: true
+
+    servers.each do |machine|
+
+        config.vm.define machine[:hostname] do |node|
+
+            config.ssh.insert_key = false
+            node.vm.usable_port_range = (2200..2250)
+            node.vm.hostname = machine[:hostname]
+            node.vm.network "private_network", ip: machine[:ip]
+
+            # This will be applied to all vms
+
+            # Ubuntu
+            node.vm.box = "bento/ubuntu-16.04"
+
+            # Debian 8
+            # node.vm.box = "boxcutter/debian8"
+
+            # CentOS 7
+            # node.vm.box = "boxcutter/centos7"
+
+            node.vm.provider "virtualbox" do |vb|
+                vb.customize ["modifyvm", :id, "--memory", machine[:ram], "--cpus", machine[:cpu]]
+                vb.name = machine[:hostname]
+            end
+        end
+
+    end
+
+  config.vm.provision :shell, inline: $bootstrap_script
+
+  config.vm.provision "ansible" do |ansible|
+    ansible.limit = "all"
+    ansible.playbook = "playbook.yml"
+    #ansible.inventory_path = "ansible_inventory"
+    #ansible.host_key_checking = false
+    ansible.verbose = "vvv"
+  end
+
+end

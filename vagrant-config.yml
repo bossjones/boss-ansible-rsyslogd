@@ -1,0 +1,62 @@
+# https://gist.github.com/gnarf/b103e77f37236ca72d8e
+:vms:
+  control:
+    :hostname: "control"
+    :ip: "192.168.33.100"
+    :ram: 512
+    :cpu: 1
+
+  rsyslog-server1:
+    :hostname: "rsyslog-server1"
+    :ip: "192.168.33.101"
+    :ram: 512
+    :cpu: 1
+
+  rsyslog-server2:
+    :hostname: "rsyslog-server2"
+    :ip: "192.168.33.102"
+    :ram: 512
+    :cpu: 1
+
+  rsyslog-client1:
+    :hostname: "rsyslog-client1"
+    :ip: "192.168.33.103"
+    :ram: 512
+    :cpu: 1
+
+  rsyslog-client2:
+    :hostname: "rsyslog-client2"
+    :ip: "192.168.33.104"
+    :ram: 512
+
+  elk:
+    :hostname: "elk"
+    :ip: "192.168.33.105"
+    :ram: 2048
+
+:groups:
+  rsyslog-server1:
+    - rsyslog-server1
+  rsyslog-server2:
+    - rsyslog-server2
+  rsyslog-servers-centralized:
+    - rsyslog-server1
+    - rsyslog-server2
+  control:
+    - control
+  rsyslog-client1:
+    - rsyslog-client1
+  rsyslog-client2:
+    - rsyslog-client2
+  rsyslog-clients:
+    - rsyslog-client1
+    - rsyslog-client2
+  elk:
+    - elk
+  servers:
+    - rsyslog-server1
+    - rsyslog-server2
+    - control
+    - rsyslog-client1
+    - rsyslog-client2
+

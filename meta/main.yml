@@ -3,8 +3,7 @@ allow_duplicates: no
 
 galaxy_info:
   author: Malcolm Jones
-  description: The boss-ansible-role-rsyslogd
-role can be used to setup rsyslogd from scratch. Part of the bossjones suite of ansible roles
+  description: The boss-ansible-role-rsyslogd role can be used to setup rsyslogd from scratch. Part of the bossjones suite of ansible roles
   company: Tony Dark Labs
 
   # If the issue tracker for your role is not on github, uncomment the

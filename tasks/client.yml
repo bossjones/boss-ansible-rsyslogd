@@ -1,0 +1,130 @@
+---
+############################## rsyslog-clients ##############################
+
+- hosts: rsyslog-client1 rsyslog-client2
+  become: yes
+  become_method: sudo
+
+  vars:
+   - docroot: /opt/deployment/nmon-logger
+   - rpm_binpath: "{{ lookup('pipe', 'ls /opt/deployment/nmon-logger/rpm/nmon-logger-rsyslog-*.rpm | grep -v aix | head -1') }}"
+   - rpm_binname: "{{ lookup('pipe', 'ls /opt/deployment/nmon-logger/rpm/nmon-logger-rsyslog-*.rpm | grep -v aix | head -1 | xargs basename') }}"
+   - deb_debian_binpath: "{{ lookup('pipe', 'ls /opt/deployment/nmon-logger/deb/nmon-logger-rsyslog-debian-2.0.10.deb | head -1') }}"
+   - deb_debian_binname: "{{ lookup('pipe', 'ls /opt/deployment/nmon-logger/deb/nmon-logger-rsyslog-debian-2.0.10.deb | head -1 | xargs basename') }}"
+   - deb_ubuntu_binpath: "{{ lookup('pipe', 'ls /opt/deployment/nmon-logger/deb/nmon-logger-rsyslog-ubuntu-2.0.10.deb | head -1') }}"
+   - deb_ubuntu_binname: "{{ lookup('pipe', 'ls /opt/deployment/nmon-logger/deb/nmon-logger-rsyslog-ubuntu-2.0.10.deb | head -1 | xargs basename') }}"
+
+  tasks:
+
+    #
+    # For Ubuntu
+    #
+
+  - block:
+
+    - name: Install rsyslog repo for Ubuntu
+
+      # Add repo
+      apt_repository: repo='ppa:adiscon/v8-stable' state=present
+      when: ansible_distribution == 'Ubuntu'
+
+    - name: Update cache for Ubuntu
+
+      # Update apt cache
+      apt: update_cache=yes
+
+    - name: Update rsyslog for Ubuntu
+
+      # Update package
+      # Note: Using apt module does not seem to update rsyslog package, updating using command
+      command: apt-get install -y rsyslog
+
+    when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
+    #
+    # For RHEL / Centos
+    #
+
+  - block:
+
+    - name: Install rsyslog repo for RHEL/CentOS
+
+      # Install repo file
+      get_url: url=http://rpms.adiscon.com/v8-stable/rsyslog.repo dest=/etc/yum.repos.d/
+
+    - name: Update rsyslog for RHEL/CentOS
+
+      # Update package
+      # Note: Using yum module does not seem to update rsyslog package, updating using command
+      command: yum install -y rsyslog
+
+    when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
+
+  ############################## Perl dependency ##############################
+  - block:
+
+    - name: Install perl minimal for CentOS 6.x
+      yum: name=perl state=latest update_cache=yes
+
+    when: (ansible_distribution == "CentOS" and ansible_distribution_major_version == "6")
+
+  ############################## Perl Time/HiRes dependency ##############################
+  - block:
+
+    - name: Install perl-Time-HiRes for CentOS 6.x
+      yum: name=perl-Time-HiRes state=latest
+
+    when: (ansible_distribution == "CentOS" and ansible_distribution_major_version == "6")
+
+  # Configure rsyslog on this host: Send data to rsyslog server, add rsyslog repo, update and upgrade rsyslog
+
+  - name: Deploy rsyslog central configuration
+    copy:
+      # src: "{{ docroot }}/vagrant-ansible-demo-rsyslog/01-central-client.conf"
+      src: /opt/deployment/nmon-logger/vagrant-ansible-demo-rsyslog/01-central-client.conf
+      remote_src: yes
+      dest: /etc/rsyslog.d/
+      owner: root
+      group: root
+      mode: 0644
+
+  # NMON LOGGER installation
+
+  # For RPM
+
+  - block:
+
+    - name: Copy current rpm package to /tmp (for rpm based OS)
+      copy: src={{ rpm_binpath }} dest=/tmp/
+              owner=root group=root mode=0644 remote_src=yes
+
+    - name: Install nmon-logger rpm package (for rpm based OS)
+      yum: name=/tmp/{{ rpm_binname }} state=present
+
+    when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
+
+  # For Debian
+
+  - block:
+
+    - name: Copy current deb package to /tmp (for Debian OS)
+      copy: src={{ deb_debian_binpath }} dest=/tmp/
+              owner=root group=root mode=0644 remote_src=yes
+
+    - name: Install nmon-logger deb package (for deb based OS)
+      apt: deb=/tmp/{{ deb_debian_binname }} state=present
+
+    when: ansible_distribution == 'Debian'
+
+  # For Debian
+
+  - block:
+
+    - name: Copy current deb package to /tmp (for Ubuntu based OS)
+      copy: src=/opt/deployment/nmon-logger/deb/nmon-logger-rsyslog-ubuntu-2.0.10.deb dest=/tmp/
+              owner=root group=root mode=0644 remote_src=yes
+
+    - name: Install nmon-logger deb package (for deb based OS)
+      apt: deb=/tmp/nmon-logger-rsyslog-ubuntu-2.0.10.deb state=present
+
+    when: ansible_distribution == 'Ubuntu'

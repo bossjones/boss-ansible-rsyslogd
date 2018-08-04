@@ -1,3 +1,12 @@
+LAST TIME I WORKED ON THIS, I opened up
+
+- debops.rsyslog
+- mr rsyslog
+- ansible-vagrant-examples
+- ansible-nmon-logger-rsyslogd
+
+heavily influnced by debops! For learning purposes only!
+
 Role Name
 =========
 
